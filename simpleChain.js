@@ -27,14 +27,21 @@ class Block{
 class Blockchain{
     constructor(){
         this.getBlockHeight().then((h) => {
-            if (h < 1) {
-                // Add Genesis Block
-                this.addBlock(new Block("First block in the chain - Genesis block"))
+            if (h < 0) {
+                // create Genesis block
+                let genesisBlock = new Block("First block in the chain - Genesis block");
+                genesisBlock.previousBlockHash = "";
+                genesisBlock.height = 0;
+                genesisBlock.time = new Date().getTime().toString().slice(0, -3);
+                genesisBlock.hash = SHA256(JSON.stringify(genesisBlock)).toString();
+
+                // add Genesis block to chain
+                db.addLevelDBData(0, JSON.stringify(genesisBlock).toString())
                     .then((genesisBlock) => {
                         console.log('Added Genesis Block:');
-                        console.log(genesisBlock)
+                        console.log(genesisBlock);
                     }).catch((err) => {
-                        console.log('Unable to add Genesis Block!', err);
+                        console.log('Unable to add Genesis block!', err);
                 });
             }
         }).catch((err) => {
@@ -51,27 +58,13 @@ class Blockchain{
     addBlock(newBlock) {
         return new Promise((resolve, reject) => {
             // Block height
-            this.getBlockHeight().then((h) => {
-                newBlock.height = h+1;
+            this.getBlockHeight().then((height) => {
+                newBlock.height = height+1;
                 // UTC timestamp
                 newBlock.time = new Date().getTime().toString().slice(0, -3);
                 // previous block hash
-                if (newBlock.height > 1) {
-                    this.getBlock(newBlock.height-1).then((block) => {
-                        newBlock.previousBlockHash = block.hash;
-                        // Block hash with SHA256 using newBlock and converting to a string
-                        newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-                        // Adding block object to chain
-                        db.addLevelDBData(newBlock.height, JSON.stringify(newBlock).toString())
-                            .catch((err) => {
-                                reject(err);
-                            }).then((block) => {
-                                resolve(block);
-                        });
-                    }).catch((err) => {
-                        reject('Unable to get previous block! => block not added.', err);
-                    });
-                } else {
+                this.getBlock(height).then((block) => {
+                    newBlock.previousBlockHash = block.hash;
                     // Block hash with SHA256 using newBlock and converting to a string
                     newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
                     // Adding block object to chain
@@ -80,8 +73,10 @@ class Blockchain{
                             reject(err);
                         }).then((block) => {
                             resolve(block);
-                    });
-                }
+                        });
+                }).catch((err) => {
+                    reject('Unable to get previous block! => block not added.', err);
+                });
             }).catch((err) => {
                 reject('Unable to get block height! => block not added.', err);
             });
@@ -92,7 +87,7 @@ class Blockchain{
     getBlockHeight(){
         return new Promise((resolve, reject) => {
             db.getAmountEntries().then((height) => {
-                resolve(height);
+                resolve(height-1);
             }).catch((err) => {
                 reject(err);
             });
@@ -110,6 +105,52 @@ class Blockchain{
         });
     }
 
+    // validate the whole Blockchain and return corresponding error log
+    async validateChain() {
+        let errorLog = [];
+        try {
+            const blockHeight = await this.getBlockHeight();
+            let errorLogBuf = await this.validateBlockConnectivity(blockHeight);
+            errorLog.concat(errorLogBuf);
+            errorLogBuf = await this.validateEachBlock(blockHeight);
+            errorLog.concat(errorLogBuf);
+        } catch (err) {
+            console.log('validateChain:', err);
+        }
+        return errorLog;
+    }
+
+    // validate block connectivity and return corresponding error log
+    async validateBlockConnectivity(blockHeight) {
+        let errorLog = [];
+        for (let i = 0; i < blockHeight; i++) {
+            try {
+                let currentBlock = await this.getBlock(i);
+                let nextBlock = await this.getBlock(i+1);
+                if (currentBlock.hash !== nextBlock.previousBlockHash) {
+                    errorLog.push(i);
+                }
+            } catch (err) {
+                console.log('validateBlockConnectivity: Unable to receive each block.', err);
+            }
+        }
+        return errorLog;
+    }
+
+    // validate each block and return the corresponding error log
+    async validateEachBlock(blockHeight) {
+        let errorLog = [];
+        for (let i = 0; i <= blockHeight; i++) {
+            try {
+                await this.validateBlock(blockHeight);
+            } catch (err) {
+                console.log('validateEachBlock: ', err);
+                errorLog.push(i);
+            }
+        }
+        return errorLog;
+    }
+
     // validate block
     validateBlock(blockHeight){
         return new Promise((resolve, reject) => {
@@ -118,50 +159,14 @@ class Blockchain{
                 block.hash = '';
                 let validBlockHash = SHA256(JSON.stringify(block)).toString();
                 if (blockHash === validBlockHash) {
-                    resolve();
+                    resolve(true);
                 } else {
-                    console.log('Block #'+blockHeight+' invalid hash:\n'+blockHash+'<>'+validBlockHash);
-                    reject();
+                    reject('Block #'+blockHeight+' invalid hash:\n'+blockHash+'<>'+validBlockHash);
                 }
             }).catch((err) => {
-                console.log('Unable to get block #'+blockHeight+'.\n=>', err);
-                reject();
+                console.log('validateBlock: Unable to get block #'+blockHeight);
+                reject(err);
             })
-        });
-    }
-
-    // Validate blockchain
-    validateChain(){
-        let errorLog = [];
-        this.getBlockHeight().then((height) => {
-            // Genesis Block is Block #1!
-            for (let i = 1; i < height; i++) {
-                this.validateBlock(i).then(() => {
-                    // compare block hash link
-                    this.getBlock(i).then((b1) => {
-                        this.getBlock(i+1).then((b2) => {
-                            if (b1 !== b2.previousBlockHash) {
-                                errorLog.push(i);
-                            }
-                        }).catch((err) => {
-                            console.log(err);
-                        })
-                    }).catch((err) => {
-                        console.log(err);
-                    })
-                }).catch(() => {
-                    errorLog.push(i);
-                })
-            }
-            if (errorLog.length>0) {
-                console.log('Block errors = ' + errorLog.length);
-                console.log('Blocks: '+errorLog);
-            } else {
-                console.log('No errors detected');
-            }
-        }).catch((err) => {
-            console.log(err);
-            console.log('=== Validation failed! ===');
         });
     }
 }
