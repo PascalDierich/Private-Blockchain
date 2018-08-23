@@ -1,7 +1,7 @@
 {
-  "name": "project2",
+  "name": "Private-Blockchain",
   "version": "1.0.0",
-  "description": "Project 2 in Udacitys \"Blockchain Developer Nanodegree Program\". Develop your own simplified private Blockchain!",
+  "description": "Private Blockchain with basic REST-API",
   "main": "levelSandbox.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,7 +9,9 @@
   "author": "Pascal Dierich",
   "license": "GNU GPLv3.0",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "crypto-js": "^3.1.9-1",
+    "express": "^4.16.3",
     "level": "^4.0.0"
   }
 }
