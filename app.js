@@ -8,6 +8,7 @@ const currentChain = new Blockchain();
 // Setup
 ////////////
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded( {extended: true} ));
 app.listen(8000, () => console.log('WebService listens on port 8000'));
 
 ////////////
@@ -37,7 +38,7 @@ function getHandler(req, res) {
 }
 
 function postHandler(req, res) {
-    const blockBody = req.body.body;
+    const blockBody = req.body.content;
     if (typeof blockBody === "undefined") {
         errorHandler(req, res, "Unable to get block-information");
         return;

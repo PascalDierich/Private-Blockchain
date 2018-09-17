@@ -72,7 +72,7 @@ class Blockchain{
                         .catch((err) => {
                             reject(err);
                         }).then((block) => {
-                            resolve(block);
+                            resolve(JSON.parse(block));
                         });
                 }).catch((err) => {
                     reject('Unable to get previous block! => block not added.', err);
