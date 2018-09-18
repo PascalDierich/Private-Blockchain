@@ -2,7 +2,7 @@
 Project 2 and 3 in Udacitys "Blockchain Developer Nanodegree Program".
 
 ### Dependencys
-* Node.js Framework
+* Node.js Framework (using currently 8.11.+)
 ```
 "dependencies": {
     "body-parser": "^1.18.3",
