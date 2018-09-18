@@ -20,38 +20,36 @@ app.post('/block', postHandler);
 ////////////
 // Handler
 ////////////
-function getHandler(req, res) {
+async function getHandler(req, res) {
     const blockID = parseInt(req.params.blockID, 10);
     if (isNaN(blockID)) {
         errorHandler(req, res, "Unable to parse block ID");
         return;
     }
 
-    currentChain.getBlock(blockID)
-        .then((block) => {
-            res.send(block);
-        })
-        .catch((err) => {
-            console.log('getHandler received error:', err);
-            errorHandler(req, res, "Currently unable to get block #"+blockID);
-        });
+    try {
+        const block = await currentChain.getBlock(blockID);
+        res.send(block);
+    } catch (err) {
+        console.log('getHandler received error:', err);
+        errorHandler(req, res, 'Currently unable to get block #{}', blockID);
+    }
 }
 
-function postHandler(req, res) {
+async function postHandler(req, res) {
     const blockBody = req.body.content;
-    if (typeof blockBody === "undefined") {
-        errorHandler(req, res, "Unable to get block-information");
+    if (!blockBody && typeof blockBody === "string") {
+        errorHandler(req, res, 'Unable to get block-information');
         return;
     }
 
-    currentChain.addBlock(Blockchain.createBlock(blockBody))
-        .then((block) => {
-            res.send(block);
-        })
-        .catch((err) => {
-            console.log('postHandler received error:', err);
-            errorHandler(req, res, "Currently unable to add block");
-        })
+    try {
+        const block = await currentChain.addBlock(Blockchain.createBlock(blockBody));
+        res.send(block);
+    } catch (err) {
+        console.log('postHandler received error:', err);
+        errorHandler(req, res, 'Currently unable to add block');
+    }
 }
 
 function errorHandler(req, res, errMsg) {
