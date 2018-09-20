@@ -46,14 +46,14 @@ async function validateSignature(req, res) {
     const address = req.body.address;
     const signature = req.body.signature;
 
-    const timestamp = Number(addressMap.get(address)); // TODO: timestamp undefined
+    const timestamp = Number(addressMap.get(address));
     if (isNaN(timestamp)) {
         console.log('address not found in map. address=%s signature=%s', address, signature);
         errorHandler(req, res, 'Validation failed.');
         return;
     }
     const message = validationUtils.createMessage(address, timestamp);
-    
+
     if (!validationUtils.verifySignature(message, address, signature)) {
         console.log('validation failed. message=%s signature=%s', message, signature);
         errorHandler(req, res, 'Validation failed.');
@@ -95,7 +95,7 @@ async function getBlock(req, res) {
 
 // addBlock adds a new block to the blockchain.
 // Handles: POST /block
-// Expects: res.body -> content=[blockContent]
+// Expects: JSON -> { content }
 async function addBlock(req, res) {
     const blockContent= req.body.content;
     if (!blockContent && typeof blockContent === "string") {
