@@ -5,6 +5,8 @@ const HashMap = require('hashmap');
 const addressMap = new HashMap(); // Cache: addressMap[address]timestamp
 const validationUtils = require('./validationUtils');
 
+// TODO: remove elements from addressMap after process.
+
 // startValidation saves the address with a timestamp and responses a message to sign.
 // Handles: POST /requestValidation
 // Expects: JSON -> { address }
@@ -36,13 +38,15 @@ async function validateSignature(req, res) {
     const address = req.body.address;
     const signature = req.body.signature;
 
-    if (!validationUtils.validateSignature(address, signature)) {
-        // TODO: send error
+    const timestamp = addressMap.get(address); // TODO: timestamp undefined
+    const message = validationUtils.createMessage(address, timestamp);
+
+    if (!validationUtils.verifySignature(message, address, signature)) {
+        console.log('validation failed. message={} signature={}', message, signature);
+        errorHandler(req, res, 'Validation failed.')
     }
 
-    const timestamp = addressMap.get(address); // TODO: timestamp undefined
     const validationWindow = validationUtils.getValidationWindow(timestamp); // TODO: implement method
-    const message = validationUtils.createMessage(address, timestamp);
 
     const status = {
         "registerStar": true,

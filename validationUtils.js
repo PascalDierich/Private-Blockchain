@@ -8,12 +8,13 @@ function createMessage(address, timestamp) {
     return address + ":" + timestamp + ":StarRegistry";
 }
 
-function validateSignature(address, signature) {
-    return true; // TODO:
+// verifySignature returns true if valid.
+function verifySignature(message, address, signature) {
+    return bitcoinMessage.verify(message, address, signature);
 }
 
 module.exports = {
     getValidationWindow,
     createMessage,
-    validateSignature
+    verifySignature
 };
