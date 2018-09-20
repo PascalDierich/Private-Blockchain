@@ -4,10 +4,16 @@ function getValidationWindow(timestamp) {
 }
 
 function createMessage(address, timestamp) {
+    // TODO: add params != undefined check
     return address + ":" + timestamp + ":StarRegistry";
+}
+
+function validateSignature(address, signature) {
+    return true; // TODO:
 }
 
 module.exports = {
     getValidationWindow,
-    createMessage
+    createMessage,
+    validateSignature
 };

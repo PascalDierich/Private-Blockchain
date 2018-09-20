@@ -5,10 +5,9 @@ const HashMap = require('hashmap');
 const addressMap = new HashMap(); // Cache: addressMap[address]timestamp
 const validationUtils = require('./validationUtils');
 
-// startValidation saves the address with a timestamp
-// and responses a message to sign.
+// startValidation saves the address with a timestamp and responses a message to sign.
 // Handles: POST /requestValidation
-// Expects: res.body -> address=[wallet address]
+// Expects: JSON -> { address }
 async function startValidation(req, res) {
     const address = req.body.address;
     if (!address && typeof address === "string") {
@@ -22,12 +21,40 @@ async function startValidation(req, res) {
     const message = validationUtils.createMessage(address, timestamp);
 
     const resMessage = {
-        address: address,
-        timestamp: timestamp,
-        message: message,
-        validationWindow: validationWindow
+        "address": address,
+        "timestamp": timestamp,
+        "message": message,
+        "validationWindow": validationWindow
     };
     res.send(resMessage);
+}
+
+// validateSignature validates the signature and responses a status.
+// Handles: POST /messageSignature/validate
+// Expects: JSON -> { address, signature }
+async function validateSignature(req, res) {
+    const address = req.body.address;
+    const signature = req.body.signature;
+
+    if (!validationUtils.validateSignature(address, signature)) {
+        // TODO: send error
+    }
+
+    const timestamp = addressMap.get(address); // TODO: timestamp undefined
+    const validationWindow = validationUtils.getValidationWindow(timestamp); // TODO: implement method
+    const message = validationUtils.createMessage(address, timestamp);
+
+    const status = {
+        "registerStar": true,
+        "status": {
+            "address": address,
+            "requestTimestamp": timestamp,
+            "message": message,
+            "validationWindow": validationWindow,
+            "messageSignature": true
+        }
+    };
+    res.send(status);
 }
 
 // getBlock returns the requested block.
@@ -74,5 +101,6 @@ function errorHandler(req, res, errMsg) {
 module.exports = {
     addBlock,
     getBlock,
-    startValidation
+    startValidation,
+    validateSignature
 };
