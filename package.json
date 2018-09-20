@@ -12,6 +12,7 @@
     "body-parser": "^1.18.3",
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.3",
+    "hashmap": "^2.3.0",
     "level": "^4.0.0"
   }
 }
