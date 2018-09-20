@@ -15,5 +15,5 @@ app.listen(8000, () => console.log('WebService listens on port 8000'));
 ////////////
 app.get('/block/:blockID', handlers.getBlock);
 app.post('/block', handlers.addBlock);
-app.post('/requestValidation', handlers.startValidation);
-app.post('/messageSignature/validate', handlers.validateSignature);
+app.post('/request-validation', handlers.startValidation);
+app.post('/message-signature/validate', handlers.validateSignature);

@@ -13,14 +13,22 @@ const validationUtils = require('./validationUtils');
 async function startValidation(req, res) {
     const address = req.body.address;
     if (!address && typeof address === "string") {
+        console.log('parsing address failed. req.body=%s', req.body);
         errorHandler(req, res, 'Unable to get address');
         return;
     }
 
-    const timestamp = time.getTime();
+    // TODO: static timestamp for testing purpose.
+    // const timestamp = time.getTime();
+    const timestamp = 1532296090;
     addressMap.set(address, timestamp);
     const validationWindow = validationUtils.getValidationWindow(timestamp);
     const message = validationUtils.createMessage(address, timestamp);
+    if (!message) {
+        console.log('createMessage failed. address=%s timestamp=%s', address, timestamp);
+        errorHandler(req, res, 'Request failed. Try again.');
+        return;
+    }
 
     const resMessage = {
         "address": address,
@@ -38,12 +46,18 @@ async function validateSignature(req, res) {
     const address = req.body.address;
     const signature = req.body.signature;
 
-    const timestamp = addressMap.get(address); // TODO: timestamp undefined
+    const timestamp = Number(addressMap.get(address)); // TODO: timestamp undefined
+    if (isNaN(timestamp)) {
+        console.log('address not found in map. address=%s signature=%s', address, signature);
+        errorHandler(req, res, 'Validation failed.');
+        return;
+    }
     const message = validationUtils.createMessage(address, timestamp);
-
+    
     if (!validationUtils.verifySignature(message, address, signature)) {
-        console.log('validation failed. message={} signature={}', message, signature);
-        errorHandler(req, res, 'Validation failed.')
+        console.log('validation failed. message=%s signature=%s', message, signature);
+        errorHandler(req, res, 'Validation failed.');
+        return;
     }
 
     const validationWindow = validationUtils.getValidationWindow(timestamp); // TODO: implement method
@@ -65,8 +79,8 @@ async function validateSignature(req, res) {
 // Handles: GET /block/:blockID
 async function getBlock(req, res) {
     const blockID = parseInt(req.params.blockID, 10);
-    if (isNaN(blockID)) {
-        errorHandler(req, res, "Unable to parse block ID");
+    if (isNaN(blockID) || blockID < 0) {
+        errorHandler(req, res, 'Unable to parse block ID');
         return;
     }
 
@@ -75,7 +89,7 @@ async function getBlock(req, res) {
         res.send(block);
     } catch (err) {
         console.log('getHandler received error:', err);
-        errorHandler(req, res, 'Currently unable to get block #{}', blockID);
+        errorHandler(req, res, 'Currently unable to get block #%s', blockID);
     }
 }
 
