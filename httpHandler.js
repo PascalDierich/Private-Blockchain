@@ -31,7 +31,7 @@ async function startValidation(req, res) {
 }
 
 // validateSignature validates the signature and responses a status.
-// Handles: POST /messageSignature/validate
+// Handles: POST /message-signature/validate
 // Expects: JSON -> { address, signature }
 async function validateSignature(req, res) {
     const address = req.body.address;
