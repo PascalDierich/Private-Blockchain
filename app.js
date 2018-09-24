@@ -17,3 +17,5 @@ app.get('/block/:blockID', handlers.getBlock);
 app.post('/block', handlers.addBlock);
 app.post('/request-validation', handlers.startValidation);
 app.post('/message-signature/validate', handlers.validateSignature);
+app.post('/stars/address/:address', handlers.getBlocksForAddress);
+app.post('/stars/hash/:hash', handlers.getBlockWithHash);

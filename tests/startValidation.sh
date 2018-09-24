@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "startValidation: Unable to get address (1)"
+echo "startValidation: Unable to parse address (1)"
 echo "--------"
 # test: empty string
 curl -X "POST" "http://localhost:8000/request-validation" \
