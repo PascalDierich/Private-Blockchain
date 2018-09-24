@@ -1,13 +1,15 @@
 const Blockchain = require('./simpleChain');
 const currentChain = new Blockchain();
-const time = new Date();
 const HashMap = require('hashmap');
-const addressMap = new HashMap(); // Cache: addressMap[address]timestamp
-const validationUtils = require('./validationUtils');
+const addressMap = new HashMap(); // Cache: addressMap[address] -> ID
+const validationProcess = require('./validation');
 
 // TODO: remove elements from addressMap after process.
+// IDEA: remove elements after call to addBlock (only allowed to add one block per validation)
+// else remove element after Deadline.
 
-// startValidation saves the address with a timestamp and responses a message to sign.
+// startValidation adds a new created ID to the addressMap and responses
+// the message to validate with a deadline.
 // Handles: POST /requestValidation
 // Expects: JSON -> { address }
 async function startValidation(req, res) {
@@ -18,23 +20,14 @@ async function startValidation(req, res) {
         return;
     }
 
-    // TODO: static timestamp for testing purpose.
-    // const timestamp = time.getTime();
-    const timestamp = 1532296090;
-    addressMap.set(address, timestamp);
-    const validationWindow = validationUtils.getValidationWindow(timestamp);
-    const message = validationUtils.createMessage(address, timestamp);
-    if (!message) {
-        console.log('createMessage failed. address=%s timestamp=%s', address, timestamp);
-        errorHandler(req, res, 'Request failed. Try again.');
-        return;
-    }
+    const customer = new validationProcess(address);
+    addressMap.set(address, customer);
 
     const resMessage = {
-        "address": address,
-        "timestamp": timestamp,
-        "message": message,
-        "validationWindow": validationWindow
+        "address": customer.address,
+        "timestamp": customer.timestamp,
+        "message": customer.message,
+        "validationWindow": customer.deadline
     };
     res.send(resMessage);
 }
@@ -46,29 +39,28 @@ async function validateSignature(req, res) {
     const address = req.body.address;
     const signature = req.body.signature;
 
-    const timestamp = Number(addressMap.get(address));
-    if (isNaN(timestamp)) {
-        console.log('address not found in map. address=%s signature=%s', address, signature);
-        errorHandler(req, res, 'Validation failed.');
-        return;
-    }
-    const message = validationUtils.createMessage(address, timestamp);
-
-    if (!validationUtils.verifySignature(message, address, signature)) {
-        console.log('validation failed. message=%s signature=%s', message, signature);
+    const customer = addressMap.get(address);
+    if (customer === undefined) {
+        console.log('ID not found in map. address=%s signature=%s', address, signature);
         errorHandler(req, res, 'Validation failed.');
         return;
     }
 
-    const validationWindow = validationUtils.getValidationWindow(timestamp); // TODO: implement method
+    console.log(customer);
+    await customer.verifySignature(signature);
+    if (!customer.isVerified()) {
+        console.log('validation failed. ID=%s signature=%s', customer, signature);
+        errorHandler(req, res, 'Validation failed.');
+        return;
+    }
 
     const status = {
         "registerStar": true,
         "status": {
-            "address": address,
-            "requestTimestamp": timestamp,
-            "message": message,
-            "validationWindow": validationWindow,
+            "address": customer.address,
+            "requestTimestamp": customer.timestamp,
+            "message": customer.message,
+            "validationWindow": customer.deadline,
             "messageSignature": true
         }
     };
@@ -93,22 +85,37 @@ async function getBlock(req, res) {
     }
 }
 
-// addBlock adds a new block to the blockchain.
+// addBlock adds a new star to the blockchain, if address is verified.
 // Handles: POST /block
-// Expects: JSON -> { content }
+// Expects: JSON -> { address, star: { dec, ra, story } }
 async function addBlock(req, res) {
-    const blockContent= req.body.content;
-    if (!blockContent && typeof blockContent === "string") {
-        errorHandler(req, res, 'Unable to get block-information');
+    const address = req.body.address;
+    const star = req.body.star;
+
+    const customer = addressMap.get(address);
+    if (customer === undefined) {
+        console.log('ID not found in map. address=%s', address);
+        errorHandler(req, res, 'Please validate before submitting a new star.');
+        return;
+    }
+    addressMap.delete(address);
+    if (!customer.isVerified()) {
+        console.log('ID not verified. ID=%s', customer);
+        errorHandler(req, res, 'Please validate before submitting a new star.');
         return;
     }
 
+    // TODO: check star-object
+    const blockContent = {
+        "address": address,
+        "star": JSON.stringify(star)
+    };
     try {
         const block = await currentChain.addBlock(Blockchain.createBlock(blockContent));
         res.send(block);
     } catch (err) {
         console.log('postHandler received error:', err);
-        errorHandler(req, res, 'Currently unable to add block');
+        errorHandler(req, res, 'Currently unable to add star');
     }
 }
 
