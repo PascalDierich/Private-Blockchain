@@ -1,3 +1,4 @@
+const bitcoin = require('bitcoinjs-lib');
 const bitcoinMessage = require('bitcoinjs-message');
 
 function getValidationWindow(timestamp) {

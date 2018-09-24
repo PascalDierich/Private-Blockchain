@@ -2,14 +2,17 @@
 Project 2 and 3 in Udacitys "Blockchain Developer Nanodegree Program".
 
 ### Dependencys
-* Node.js Framework (using currently 8.11.+)
+* Node.js Framework (currently 8.11.+)
 ```
 "dependencies": {
+    "bitcoinjs-lib": "^4.0.2",
+    "bitcoinjs-message": "^2.0.0",
     "body-parser": "^1.18.3",
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.3",
+    "hashmap": "^2.3.0",
     "level": "^4.0.0"
-}
+  }
 ```
 
 ### Methods
