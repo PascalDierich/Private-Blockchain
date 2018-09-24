@@ -70,7 +70,14 @@ async function validateSignature(req, res) {
 // Expects: JSON -> { address, star: { dec, ra, story } }
 async function addBlock(req, res) {
     const address = req.body.address;
+    if (!address && typeof address === "string") {
+        console.log('parsing address failed. req.body=%s', req.body);
+        errorHandler(req, res, 'Unable to parse address');
+        return;
+    }
+
     const star = req.body.star;
+    // TODO: check star-object
 
     const customer = addressMap.get(address);
     if (customer === undefined) {
@@ -84,8 +91,6 @@ async function addBlock(req, res) {
         errorHandler(req, res, 'Please validate before submitting a new star.');
         return;
     }
-
-    // TODO: check star-object
     const blockContent = {
         "address": address,
         "star": JSON.stringify(star)
@@ -131,7 +136,7 @@ async function getBlocksForAddress(req, res) {
         res.send(blocks);
     } catch (err) {
         console.log('getBlocksForAddress received error:', err);
-        errorHandler(req, res, 'Currently unable to get blocks added by %s', address);
+        errorHandler(req, res, 'Currently unable to get blocks added by '+ address);
     }
 }
 
@@ -149,7 +154,7 @@ async function getBlockWithHash(req, res) {
         res.send(block);
     } catch (err) {
         console.log('getBlockWithHash received error:', err);
-        errorHandler(req, res, 'Currently unable to get block with hash %s', hash);
+        errorHandler(req, res, 'Currently unable to get block with hash '+ hash);
     }
 }
 

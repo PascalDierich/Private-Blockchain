@@ -105,6 +105,28 @@ class Blockchain{
         });
     }
 
+    // getBlocksAddedBy returns all blocks added by given address.
+    getBlocksAddedBy(address) {
+        return new Promise((resolve, reject) => {
+            db.getBlocksForAddress(address).then((blocks) => {
+                resolve(blocks);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    // getBlockWithHash returns the block with given hash.
+    getBlockWithHash(hash) {
+        return new Promise((resolve, reject) => {
+            db.getBlockWithHash(hash).then((block) => {
+                resolve(block);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
     // validate the whole Blockchain and return corresponding error log
     async validateChain() {
         let errorLog = [];

@@ -28,6 +28,48 @@ function getLevelDBData(key){
 }
 module.exports.getLevelDBData = getLevelDBData;
 
+function getBlockWithHash(hash) {
+    return new Promise((resolve, reject) => {
+        db.createReadStream().on('data', (data) => {
+            const block = JSON.parse(data.value);
+            if (block.hash === hash) {
+                return resolve(block);
+            }
+        }).on('error', (error) => {
+            return reject(error);
+        }).on('close', () => {
+            return reject("No block found.");
+        });
+    });
+}
+module.exports.getBlockWithHash = getBlockWithHash;
+
+function getBlocksForAddress(address) {
+    const blocks = [];
+
+    return new Promise((resolve, reject) => {
+        db.createReadStream().on('data', (data) => {
+            const block = JSON.parse(data.value);
+            // check Genesis block
+            if (block.height === 0) {
+                return;
+            }
+            if (block.body.address === address) {
+                blocks.push(block);
+            }
+        }).on('error', (error) => {
+            return reject(error);
+        }).on('close', () => {
+            if (blocks.length === 0) {
+                reject("No block found.");
+            } else {
+                return resolve(blocks);
+            }
+        });
+    });
+}
+module.exports.getBlocksForAddress = getBlocksForAddress;
+
 // Add data to levelDB with value
 // function addDataToLevelDB(value) {
 //     return new Promise((resolve, reject) => {
