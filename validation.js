@@ -29,7 +29,7 @@ class ID {
     }
 
     static getValidationDeadline(timestamp) {
-        return timestamp + 3600000; // TODO: deadline = 1 hour.
+        return timestamp + 300000; // 5 minutes
     }
 }
 module.exports = ID;
