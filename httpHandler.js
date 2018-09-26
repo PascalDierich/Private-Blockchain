@@ -23,7 +23,7 @@ async function startValidation(req, res) {
 
     const resMessage = {
         "address": customer.address,
-        "timestamp": customer.timestamp,
+        "requestTimestamp": customer.timestamp,
         "message": customer.message,
         "validationWindow": customer.deadline
     };
@@ -91,6 +91,7 @@ async function addBlock(req, res) {
         errorHandler(req, res, 'Please validate before submitting a new star.');
         return;
     }
+
     const blockContent = {
         "address": address,
         "star": JSON.stringify(star)
@@ -99,7 +100,7 @@ async function addBlock(req, res) {
         const block = await currentChain.addBlock(Blockchain.createBlock(blockContent));
         res.send(block);
     } catch (err) {
-        console.log('postHandler received error:', err);
+        console.log('addBlock received error:', err);
         errorHandler(req, res, 'Currently unable to add star');
     }
 }
