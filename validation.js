@@ -12,11 +12,6 @@ class ID {
 
     // verifySignature sets the isVerified field to the result of the verification.
     async verifySignature(signature) {
-        if (signature.length !== 65) { // lib-function throws error in this case.
-            this.signatureVerified = false;
-            return;
-        }
-
         try {
             this.signatureVerified = await bitcoinMessage.verify(this.message, this.address, signature);
         } catch (err) {
