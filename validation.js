@@ -24,7 +24,8 @@ class ID {
     }
 
     static getValidationDeadline(timestamp) {
-        return timestamp + 300000; // 5 minutes
+        const milliseconds = timestamp + 300000; // 5 minutes
+        return milliseconds / 1000; // convert to seconds
     }
 }
 module.exports = ID;
